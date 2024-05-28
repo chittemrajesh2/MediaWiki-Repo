@@ -40,10 +40,9 @@ Based on deployment needs, we have two deployment strategies:
 # Blue-Green Deployment:
 9&10. Deploy code into Azure Spring Apps.
 
-9. Blue Green Deployment
+9. Blue-Green Deployment
+10. Staging Deployments
 Normal [default] deployment is for staging deployments.
-10. Staging Deployments:
-
 Deploying code (image) into Azure Spring Apps.
 
 Depending on deployment requirements, we adjust the CI/CD pipeline accordingly. We can raise a PR to trigger either the deployment to Azure Spring Apps or comment out specific tasks in the pipeline.

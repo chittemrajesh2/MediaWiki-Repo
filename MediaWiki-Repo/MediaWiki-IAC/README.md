@@ -1,10 +1,10 @@
 # CI/CD Pipeline for MediaWiki Deployment "mediawiki-app.yaml"
 
-This README file provides a detailed explanation of each step in the provided Azure DevOps YAML pipeline configuration for deploying MediaWiki using Docker and Azure services.
+These steps provided by Azure DevOps YAML pipeline configuration for deploying MediaWiki using Docker and Azure services.
 
 ## Pipeline Overview
 
-The pipeline is triggered by changes to the `main` branch and uses an Ubuntu-based agent. The pipeline consists of a single stage, `BuildAndPush`, which includes the following steps:
+The pipeline is triggered by changes to the `main` branch and uses an Ubuntu-based agent. The pipeline consists of a single stage, `BuildAndDeploy`, which includes the following steps:
 
 1. Build a Docker image for MediaWiki.
 2. Save the Docker image as a tar file and publish it as an artifact.
@@ -30,5 +30,5 @@ The pipeline is triggered by changes to the `main` branch and uses an Ubuntu-bas
 
 The pipeline consists of a single stage:
 
-1. **Build**: This stage runs a bash script to set up MediaWiki on a target environment.
+1. **Build**: This stage runs a bash script to set up MediaWiki on a target environment. 
 

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "azure_spring_app": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure Spring Cloud application."
+      }
+    },
+    "virtual_network": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the virtual network."
+      }
+    },
+    "service_runtime_subnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet for Azure Spring Cloud service runtime."
+      }
+    },
+    "app_subnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet for the Azure Spring Cloud application."
+      }
+    },
+    "servicecidr": {
+      "type": "string",
+      "metadata": {
+        "description": "Address space for the service runtime subnet and application subnet."
+      }
+    },
+    "zoneRedundant": {
+      "type": "bool",
+      "metadata": {
+        "description": "Specifies whether the Azure Spring Cloud application should be zone redundant."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure region where the Azure Spring Cloud application will be deployed."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.AppPlatform/Spring",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('azure_spring_app')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "serviceRuntimeSubnetId": "[parameters('service_runtime_subnet')]",
+        "appSubnetId": "[parameters('app_subnet')]",
+        "serviceCidr": "[parameters('servicecidr')]",
+        "zoneRedundant": "[parameters('zoneRedundant')]"
+      },
+      "dependsOn": [
+        "[parameters('virtual_network')]"
+      ]
+    }
+  ]
+}

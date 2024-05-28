@@ -1,0 +1,103 @@
+trigger:
+    branches:
+        include:
+        - 'main'
+    paths:
+        include:
+        - MediaWiki/*
+        - MediaWiki-IAC/*  
+
+trgger:
+ - none
+ 
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Build&Deploy
+  jobs:
+  - job: Build&Deploy
+    steps:
+
+    - task: Docker@2
+      displayName: 'Building UI Image'
+      inputs:
+        repository: 'Image_name'
+        command: 'build'
+        Dockerfile: 'Dockerfile'
+        tags: 'latest'
+    
+    # we need onvert image to tar,  because azure artifaccts will not allow docker image to store, will allow files like zip, jar and tar
+    - task: Docker@2
+      displayName: 'Save image to tar'
+      inputs:
+        repository: 'Image_name'
+        command: 'save'
+        arguments: '--output $(build.artifactstagingdirectory)/image_name.tar image_name:latest'
+        addPipleineData: false     
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish MediaWiki Artifcats'
+        PathtoPublish: '$(build.artifactstagingdirectory)/MediaWiki.tar'
+        ArtifactName: drop
+        publishLocation: 'Container'
+
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'drop'
+        downloadPath: '$(System.DefaultWorkingDirectory)'
+
+    # Upload to ACR
+    - task: CmdLine@2
+      displayName: 'Login to ACR'
+      inputs:
+        script |
+            docker login Azure_Container_Registry_name --username Container_Registry_name --password Regristry_password
+
+    - task: CmdLine@2
+      displayName: 'Docker Image Retag & Push' 
+      inputs:
+        script |
+            docker tag  Imagename:latest Azure_Container_Registry_name/Imagename:latest
+            docker push  Azure_Container_Registry_name/Imagename:latest
+
+
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'Deploy Spring Cloud'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: 'serviceconnection_name'
+        subscriptionId: 'subscriptionid_id'
+        action: 'Create Or Update spring app'
+        resourceGroupName: 'resourceGroup_Name'
+        location: 'ukwest'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.DefaultWorkingDirectory)/ARM-Template/deploy.json'
+        csmParametersFile: '$(System.DefaultWorkingDirectory)/ARM-Template/UI/deploy.json'
+        deploymentMode: 'Incremental'
+    
+       # this task enable when green deployment need and switch the portal stagging to green
+
+    - task: AzureCLI@2
+      displayName: 'Create Green Deployment'
+      inputs:
+        azureSubscription: '<Azure-Subscription-Name>'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+            #blue green deployment 
+            az spring app deployment create --app <app-name> --name green --resource-group <resource-group-name> --service <service-name> --imageName 'your-dockerhub-username/mediawiki:latest'
+    
+    # this task enable when staging default deployment need and switch the portal green to stagging  
+
+    # - task: AzureCLI@2
+    #   displayName: 'Create Staggin Deployment'
+    #   inputs:
+    #     azureSubscription: '<Azure-Subscription-Name>'
+    #     scriptType: 'bash'
+    #     scriptLocation: 'inlineScript'
+    #     inlineScript: |
+    #         #Staging deployment 
+    #         az spring app deployment create --app <app-name> --name default --resource-group <resource-group-name> --service <service-name> --imageName 'your-dockerhub-username/mediawiki:latest'

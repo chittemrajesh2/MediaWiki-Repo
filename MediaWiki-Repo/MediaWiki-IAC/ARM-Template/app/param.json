@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "azure_spring_app": {
+      "value": "azure_spring_cloud_name"
+    },
+    "virtual_network": {
+      "value": "/subscriptions/subscriptions_id/resourceGroups/resourceGroups_name/providers/Microsoft.Network/virtualNetworks/virtualNetworks_name"
+    },
+    "service_runtime_subnet": {
+      "value": "virtualNetworks_subnet_name_1"
+    },
+    "app_subnet": {
+      "value": "virtualNetworks_subnet_name_2"
+    },
+    "servicecidr": {
+      "value": "servicecidr_ip_address"
+    },
+    "zoneRedundant": {
+      "value": true
+    },
+    "location": {
+      "value": "location_name"
+    }
+  }
+}

@@ -1,0 +1,118 @@
+trigger:
+    branches:
+        include:
+        - 'main'
+    paths:
+        include:
+        - MediaWiki/*
+        - MediaWiki-IAC/*  
+
+trgger:
+ - none
+
+variables:
+  # Azure Resource Manager connection created during pipeline creation
+  azureSubscription: 'subscription-id'
+  webAppName: 'web-app-name'
+  vmImageName: 'ubuntu-latest'
+  environmentName: 'environment-name'
+  rootFolder: $(System.DefaultWorkingDirectory)
+  # webapp details
+  webAppName: '<webapp-name>'
+  resourceGroupName: '<resource-group-name>'
+  packagePath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)/MediaWiki.zip'
+  azureSubscription: '<Azure-Subscription-Name>'
+
+
+stages:
+- stage: Build
+  displayName: Build stage
+  variables:
+    phpVersion: '8.2'
+
+  jobs:
+  - job: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - script: |
+        sudo update-alternatives --set php /usr/bin/php$(phpVersion)
+        sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
+        sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
+        sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
+        sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
+        php -version
+      workingDirectory: $(rootFolder)
+      displayName: 'Use PHP version $(phpVersion)'
+
+    - script: |
+        composer self-update
+        composer dump-autoload
+        composer install --no-interaction --prefer-dist
+      workingDirectory: $(rootFolder)
+      displayName: 'Composer install'
+
+    - script: './vendor/bin/phpunit --log-junit TEST-RESULTS.xml'
+      displayName: 'Run tests with phpunit'
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)/MediaWiki.zip'
+        replaceExistingArchive: true
+      displayName: 'Archive PHP files'
+
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(agent.builddirectory'
+        Contents: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)/WikiMedia.zip' 
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Upload package'
+        PathtoPublish: 'MediaWiki/MediaWiki.zip'
+        ArtifactName: drop
+        publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: 'Deploy Web App'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: DeploymentJob
+    pool:
+      vmImage: $(vmImageName)
+    environment: $(environmentName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.DefaultWorkingDirectory)'
+              
+          - task: AzureCLI@2
+            displayName: 'Deploy to Azure Web App using ZIP deploy'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+
+                # Login to Azure CLI
+                az account set --subscription $(azureSubscription)
+                # Deploy the ZIP file to the Azure Web App
+                az webapp deployment source config-zip \
+                  --resource-group $(resourceGroupName) \
+                  --plan <app-service-plan> \
+                  --name $(webAppName) \
+                  --src $(packagePath)
+
+

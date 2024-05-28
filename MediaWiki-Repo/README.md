@@ -16,7 +16,7 @@ This phase involves building the MediaWiki code:
 2.	Updating Composer.
 3.	Archiving files in zip format from the source directory.
 4.	Copying files into artifacts.
-5.	Publishing artifacts into the drop.
+5.	Publishing artefacts into the drop.
 6.	Deploy Phase:
 7.	Downloading artifacts.
 8.	Deploying artifacts into the Azure web application.
@@ -35,7 +35,10 @@ This phase involves building the MediaWiki code:
 8.	Using ARM templates to create and update the Spring Cloud.
 
 # Deployment Strategy
-Based on deployment needs, we have two deployment strategies:
+Based on deployment needs, we have two type of deployment :
+
+1. Blue-Green Deployemntt
+2. Stagging Deployemntt
 
  ## Blue-Green Deployment:
 9&10. Deploy code into Azure Spring Apps.

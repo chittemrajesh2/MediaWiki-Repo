@@ -1,3 +1,2 @@
-Steps to download the MediaWiki-Repo
-Clone the code
-git clone url
+Clone the code :
+git clone https://github.com/chittemrajesh2/MediaWiki-Repo.git
